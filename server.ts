@@ -7,7 +7,7 @@ import cookieParser from "cookie-parser";
 const app = express();
 export default app; // Export for Vercel
 
-console.log('DEBUG: Server starting up...');
+console.log(`DEBUG: Server starting up... (NODE_ENV: ${process.env.NODE_ENV}, VERCEL: ${process.env.VERCEL})`);
 app.use(express.json());
 app.use(cookieParser());
 
@@ -486,7 +486,7 @@ async function startServer() {
       } catch (e) {
         console.error('Failed to initialize Vite middleware:', e);
       }
-    } else {
+    } else if (!process.env.VERCEL) {
       const distPath = path.join(process.cwd(), 'dist');
       if (fs.existsSync(distPath)) {
         app.use(express.static(distPath));
