@@ -113,8 +113,8 @@ export default function Home({ onStartGame }: HomeProps) {
                       
                       {/* Icon overlay */}
                       <div className="absolute top-2 left-2 sm:top-3 sm:left-3 opacity-100 bg-black p-1 border-2 border-white/20 group-hover:border-primary group-hover:text-primary transition-colors">
-                        <div className={`text-white group-hover:text-primary`}>
-                          {React.cloneElement(config.icon as React.ReactElement, { className: 'w-6 h-6 sm:w-8 sm:h-8' })}
+                        <div className="text-white group-hover:text-primary w-6 h-6 sm:w-8 sm:h-8">
+                          {config.icon as React.ReactNode}
                         </div>
                       </div>
                       

@@ -31,7 +31,7 @@ const brutalVariants = {
       "contrast(150%) hue-rotate(-90deg) blur(2px)", 
       "contrast(100%) brightness(100%) invert(0%) saturate(100%) blur(0px)"
     ],
-    transition: { duration: 0.6, times: [0, 0.4, 0.7, 1], ease: "anticipate" }
+    transition: { duration: 0.6, times: [0, 0.4, 0.7, 1], ease: "anticipate" as any }
   },
   out: { 
     opacity: [1, 1, 0], 
@@ -42,7 +42,7 @@ const brutalVariants = {
       "contrast(300%) brightness(300%) invert(100%) blur(5px)",
       "contrast(500%) brightness(500%) blur(20px)"
     ],
-    transition: { duration: 0.3, times: [0, 0.6, 1], ease: "easeIn" }
+    transition: { duration: 0.3, times: [0, 0.6, 1], ease: "easeIn" as any }
   }
 };
 

@@ -251,7 +251,7 @@ function AdminAudioPlayer({ url, volume, startTime }: { url: string, volume: num
           <span className="text-xs text-red-500">{error}</span>
         ) : null}
         <button
-          onClick={togglePlay}
+          onClick={() => togglePlay()}
           disabled={isLoading}
           className="p-2 bg-primary text-black rounded-none border-2 border-primary hover:bg-black hover:text-primary transition-colors disabled:opacity-50 brutal-shadow-hover"
         >

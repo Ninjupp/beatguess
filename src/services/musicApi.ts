@@ -1,14 +1,66 @@
 import { Category, Song } from '../types';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+    tenantId: string | null | undefined;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData.map(provider => ({
+        providerId: provider.providerId,
+        displayName: provider.displayName,
+        email: provider.email,
+        photoUrl: provider.photoURL
+      })) || []
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
+
 export async function fetchSongsByCategory(category: Category): Promise<Song[]> {
+  const path = 'songs';
   try {
     let q;
     if (category === 'Random') {
-      q = query(collection(db, 'songs'));
+      q = query(collection(db, path));
     } else {
-      q = query(collection(db, 'songs'), where('category', '==', category));
+      q = query(collection(db, path), where('category', '==', category));
     }
     
     const querySnapshot = await getDocs(q);
@@ -39,8 +91,8 @@ export async function fetchSongsByCategory(category: Category): Promise<Song[]> 
     
     return uniqueSongs;
   } catch (error) {
-    console.error('Error fetching songs from Firestore:', error);
-    return [];
+    handleFirestoreError(error, OperationType.GET, path);
+    return []; // Should not reach here as handleFirestoreError throws
   }
 }
 
