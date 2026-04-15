@@ -1,0 +1,61 @@
+{
+  "entities": {
+    "Song": {
+      "title": "Song",
+      "description": "A song in the database",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "artist": { "type": "string" },
+        "previewUrl": { "type": "string" },
+        "artworkUrl": { "type": "string" },
+        "scUsername": { "type": "string" },
+        "itunesPreviewUrl": { "type": "string" },
+        "startTime": { "type": "number" },
+        "category": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "artist", "previewUrl", "artworkUrl", "category"]
+    },
+    "User": {
+      "title": "User",
+      "description": "A user of the application",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string", "enum": ["admin", "user"] }
+      },
+      "required": ["role"]
+    },
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "A score entry on the leaderboard",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "score": { "type": "number" },
+        "category": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "songs": { 
+          "type": "array",
+          "items": { "type": "object" }
+        }
+      },
+      "required": ["name", "score", "category", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/songs/{songId}": {
+      "schema": { "$ref": "#/entities/Song" },
+      "description": "Collection of songs"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Collection of users"
+    },
+    "/leaderboards/{entryId}": {
+      "schema": { "$ref": "#/entities/LeaderboardEntry" },
+      "description": "Collection of leaderboard entries"
+    }
+  }
+}

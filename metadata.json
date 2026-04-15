@@ -1,0 +1,5 @@
+{
+  "name": "BeatGuess",
+  "description": "A music guessing game where you identify songs from short audio snippets.",
+  "requestFramePermissions": []
+}

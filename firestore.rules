@@ -1,0 +1,92 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: songs
+    // Document ID: {songId}
+    // Fields:
+    //   - id: string (required)
+    //   - title: string (required)
+    //   - artist: string (required)
+    //   - previewUrl: string (required)
+    //   - artworkUrl: string (required)
+    //   - category: string (required)
+    //   - scUsername: string (optional)
+    //   - itunesPreviewUrl: string (optional)
+    //   - startTime: number (optional)
+    //   - createdAt: string (optional)
+    //
+    // Collection: users
+    // Document ID: {userId}
+    // Fields:
+    //   - role: string (required, 'admin' or 'user')
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        (request.auth.token.email == "ninjupyt@yahoo.com" && request.auth.token.email_verified == true) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    function isValidSong(data) {
+      return data.keys().hasAll(['id', 'title', 'artist', 'previewUrl', 'artworkUrl', 'category']) &&
+             data.id is string && data.id.size() > 0 && data.id.size() < 100 &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.artist is string && data.artist.size() > 0 && data.artist.size() < 200 &&
+             data.previewUrl is string && data.previewUrl.size() > 0 && data.previewUrl.size() < 1000 &&
+             data.artworkUrl is string && data.artworkUrl.size() > 0 && data.artworkUrl.size() < 1000 &&
+             data.category is string && data.category.size() > 0 && data.category.size() < 50 &&
+             (!('scUsername' in data) || (data.scUsername is string && data.scUsername.size() < 200)) &&
+             (!('itunesPreviewUrl' in data) || (data.itunesPreviewUrl is string && data.itunesPreviewUrl.size() < 1000)) &&
+             (!('startTime' in data) || data.startTime is number) &&
+             (!('createdAt' in data) || data.createdAt is string);
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['role']) && data.role in ['admin', 'user'];
+    }
+
+    function isValidLeaderboardEntry(data) {
+      return data.keys().hasAll(['name', 'score', 'category', 'timestamp']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 20 &&
+             data.score is number && data.score >= 0 &&
+             data.category is string && data.category.size() > 0 &&
+             (data.timestamp is timestamp || data.timestamp is string) &&
+             (!('songs' in data) || data.songs is list);
+    }
+
+    match /songs/{songId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidSong(request.resource.data);
+      allow update: if isAdmin() && isValidSong(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && (
+        (request.auth.uid == userId && request.resource.data.role == 'user') || isAdmin()
+      );
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) && (
+        (request.auth.uid == userId && request.resource.data.role == resource.data.role) || isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /leaderboards/{entryId} {
+      allow read: if true;
+      allow create: if isValidLeaderboardEntry(request.resource.data);
+      allow update, delete: if isAdmin();
+    }
+  }
+}
