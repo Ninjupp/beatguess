@@ -1,11 +1,12 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import { Readable } from "stream";
 import fs from "fs";
 import path from "path";
 import cookieParser from "cookie-parser";
 
 const app = express();
+export default app; // Export for Vercel
+
 console.log('DEBUG: Server starting up...');
 app.use(express.json());
 app.use(cookieParser());
@@ -469,28 +470,44 @@ app.get('/api/stream/:id', async (req, res) => {
 });
 
 async function startServer() {
-  // Initialize SC client ID
-  await getWebClientId();
+  try {
+    // Initialize SC client ID - don't let it crash the whole server
+    await getWebClientId().catch(err => console.error('Initial Client ID fetch failed:', err));
 
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    // SPA fallback for production
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    // Vite middleware for development
+    if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+      try {
+        const { createServer: createViteServer } = await import("vite");
+        const vite = await createViteServer({
+          server: { middlewareMode: true },
+          appType: "spa",
+        });
+        app.use(vite.middlewares);
+      } catch (e) {
+        console.error('Failed to initialize Vite middleware:', e);
+      }
+    } else {
+      const distPath = path.join(process.cwd(), 'dist');
+      if (fs.existsSync(distPath)) {
+        app.use(express.static(distPath));
+        // SPA fallback for production
+        app.get('*', (req, res) => {
+          res.sendFile(path.join(distPath, 'index.html'));
+        });
+      } else {
+        console.warn('Dist folder not found at:', distPath);
+      }
+    }
+
+    // Only listen if we're not in a serverless environment (like Vercel)
+    if (!process.env.VERCEL) {
+      app.listen(PORT, "0.0.0.0", () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+      });
+    }
+  } catch (err) {
+    console.error('CRITICAL: Server failed to start:', err);
   }
-
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
 }
 
 startServer();
