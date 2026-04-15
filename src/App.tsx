@@ -176,9 +176,9 @@ export default function App() {
             onClick={() => setScreen('home')}
           >
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary flex items-center justify-center brutal-shadow">
-              <span className="text-black text-sm sm:text-base font-display">BG</span>
+              <span className="text-black text-sm sm:text-base font-display">bge</span>
             </div>
-            <span className="glitch-text" data-text="BeatGuess">Beat<span className="text-primary">Guess</span></span>
+            <span className="glitch-text" data-text="beatguesserr">beat<span className="text-primary">guesserr</span></span>
           </div>
           
           <div className="flex items-center gap-3 sm:gap-6">
@@ -271,12 +271,6 @@ export default function App() {
           </AnimatePresence>
         </div>
       </main>
-
-      <footer className="py-4 px-6 border-t-2 border-white/5 text-center relative z-10">
-        <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-text-muted opacity-50">
-          BeatGuess v0.1.0 • Built for Music Lovers
-        </p>
-      </footer>
     </div>
   );
 }

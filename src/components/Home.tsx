@@ -73,12 +73,12 @@ export default function Home({ onStartGame }: HomeProps) {
   return (
     <div className="max-w-5xl mx-auto w-full px-6 py-12">
       <div className="mb-12 sm:mb-20 relative">
-        <h1 className="text-6xl sm:text-8xl md:text-9xl font-display text-white tracking-widest uppercase mb-4 leading-none glitch-text" data-text="BeatGuess">
-          Beat<br/><span className="text-primary">Guess</span>
+        <h1 className="text-6xl sm:text-8xl md:text-9xl font-display text-white tracking-widest uppercase mb-4 leading-none glitch-text" data-text="beatguesserr">
+          beat<br/><span className="text-primary">guesserr</span>
         </h1>
         <div className="w-full bg-primary text-black font-mono uppercase tracking-widest text-xs sm:text-sm py-2 mt-6 border-y-2 border-black transform -rotate-1 marquee-container">
           <div className="marquee-content">
-            <span className="mx-4">MINIMUM AUDIO</span> • <span className="mx-4">MAXIMUM SPEED</span> • <span className="mx-4">IDENTIFY THE TRACK</span> • <span className="mx-4">SURVIVAL OF THE FITTEST</span> • <span className="mx-4">MINIMUM AUDIO</span> • <span className="mx-4">MAXIMUM SPEED</span> • <span className="mx-4">IDENTIFY THE TRACK</span> • <span className="mx-4">SURVIVAL OF THE FITTEST</span> •
+            <span className="mx-4">BEATGUESSERR</span> • <span className="mx-4">MINIMUM AUDIO</span> • <span className="mx-4">MAXIMUM SPEED</span> • <span className="mx-4">IDENTIFY THE TRACK</span> • <span className="mx-4">BEATGUESSERR</span> • <span className="mx-4">MINIMUM AUDIO</span> • <span className="mx-4">MAXIMUM SPEED</span> • <span className="mx-4">IDENTIFY THE TRACK</span> •
           </div>
         </div>
       </div>
@@ -134,18 +134,7 @@ export default function Home({ onStartGame }: HomeProps) {
         <div className="mb-16">
           <div className="flex items-center justify-between mb-6 sm:mb-8">
             <h2 className="text-3xl sm:text-4xl font-display tracking-widest uppercase text-white">Challenges</h2>
-            {isDailyCompleted && (
-              <button 
-                onClick={() => {
-                  const today = new Date().toISOString().split('T')[0];
-                  localStorage.removeItem(`daily_completed_${today}`);
-                  window.location.reload();
-                }}
-                className="text-[10px] font-mono uppercase tracking-widest text-primary hover:text-white transition-colors border-b border-primary"
-              >
-                [Dev] Reset Daily
-              </button>
-            )}
+
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Daily Challenge */}
@@ -254,11 +243,6 @@ export default function Home({ onStartGame }: HomeProps) {
 
       {/* Footer */}
       <div className="mt-16 sm:mt-24 border-t-2 border-white/10 pt-8 pb-12 flex flex-col items-center gap-4">
-        <div className="flex items-center gap-6">
-          <a href="#" className="text-text-muted hover:text-primary transition-colors font-mono text-xs uppercase tracking-widest">Twitter</a>
-          <a href="#" className="text-text-muted hover:text-primary transition-colors font-mono text-xs uppercase tracking-widest">Discord</a>
-          <a href="#" className="text-text-muted hover:text-primary transition-colors font-mono text-xs uppercase tracking-widest">GitHub</a>
-        </div>
         <p className="text-xs font-mono text-white/40 uppercase tracking-widest">
           v0.2.0 • Built for Speed
         </p>
