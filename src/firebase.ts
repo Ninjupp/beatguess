@@ -10,14 +10,16 @@ export const auth = getAuth(app);
 // Test connection to Firestore
 async function testConnection() {
   try {
-    // Try to fetch a non-existent doc just to check connectivity
-    await getDocFromServer(doc(db, '_internal_', 'connection_test'));
+    console.log('DEBUG: Starting Firestore connection test on database:', firebaseConfig.firestoreDatabaseId);
+    // Try to fetch a non-existent doc in a collection that should be public
+    await getDocFromServer(doc(db, 'songs', '_connection_test_'));
     console.log('Firestore connection test successful');
   } catch (error: any) {
     if (error.message?.includes('the client is offline') || error.message?.includes('Failed to get document because the client is offline')) {
       console.error("Firestore is offline. Please check your Firebase configuration and ensure your domain is authorized.");
     } else {
-      console.error("Firestore connection test error:", error);
+      console.error("Firestore connection test error:", error.message || error);
+      console.error("Full error object:", JSON.stringify(error));
     }
   }
 }
