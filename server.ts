@@ -9,7 +9,20 @@ const app = express();
 console.log('DEBUG: Server starting up...');
 app.use(express.json());
 app.use(cookieParser());
+
+// Request logging
+app.use((req, res, next) => {
+  if (!req.url.startsWith('/assets')) {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  }
+  next();
+});
+
 const PORT = 3000;
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), env: process.env.NODE_ENV });
+});
 
 const SC_CLIENT_ID = process.env.SOUNDCLOUD_CLIENT_ID || 'sDXiigOeKFfLu96ZHei4ynd97vs28nj8';
 const SC_CLIENT_SECRET = process.env.SOUNDCLOUD_CLIENT_SECRET || 'YFebqBqisWkOJVUs6QgBoFAFOnCc1Nrm';
@@ -285,10 +298,11 @@ async function getWebClientId() {
     }
     
     if (scriptUrls.length === 0) {
+      // Look for any script that might contain the client_id
       const scriptRegex = /<script [^>]*src="([^"]+)"/g;
       let m;
       while ((m = scriptRegex.exec(html)) !== null) {
-        if (m[1].includes('sndcdn.com/assets/')) {
+        if (m[1].includes('sndcdn.com') || m[1].includes('soundcloud.com')) {
           scriptUrls.push(m[1]);
         }
       }
@@ -296,10 +310,10 @@ async function getWebClientId() {
     
     console.log(`Found ${scriptUrls.length} potential SoundCloud asset scripts`);
     
-    // Sort scripts to try the most likely ones first
+    // Sort scripts to try the most likely ones first (usually the larger ones contain the logic)
     scriptUrls.sort((a, b) => b.length - a.length);
 
-    for (const url of scriptUrls.slice(0, 15)) {
+    for (const url of scriptUrls.slice(0, 20)) {
       try {
         const jsRes = await fetchWithRetry(url);
         if (!jsRes.ok) continue;
@@ -308,7 +322,8 @@ async function getWebClientId() {
         // Try different patterns for client_id
         const match = js.match(/client_id:"([^"]+)"/) || 
                       js.match(/client_id=([^&"]+)/) ||
-                      js.match(/clientId:"([^"]+)"/);
+                      js.match(/clientId:"([^"]+)"/) ||
+                      js.match(/"client_id":"([^"]+)"/);
                       
         if (match) {
           webClientId = match[1];
