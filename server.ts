@@ -372,23 +372,30 @@ app.get('/api/stream/:id', async (req, res) => {
     let track;
     if (trackRes.ok) {
       track = await trackRes.json();
+      console.log(`Successfully fetched track info for ${trackId}`);
     } else {
-      console.warn(`Failed to fetch track info from api-v2: ${trackRes.status}`);
+      console.warn(`Failed to fetch track info from api-v2 (status ${trackRes.status}) for ${trackId}. Retrying with fresh client ID...`);
       // Try one more time with a fresh client ID
       clientId = await getWebClientId();
       const retryRes = await fetchWithRetry(`https://api-v2.soundcloud.com/tracks/${trackId}?client_id=${clientId}`);
       if (retryRes.ok) {
         track = await retryRes.json();
+        console.log(`Successfully fetched track info for ${trackId} after retry`);
+      } else {
+        console.error(`Retry failed for ${trackId} with status ${retryRes.status}`);
       }
     }
     
     if (track && track.media && track.media.transcodings) {
+      console.log(`Track ${trackId} has ${track.media.transcodings.length} transcodings`);
       const startOffset = await calculateStartOffset(track);
       
       // Filter out encrypted HLS as we can't play them without DRM keys
       const availableTranscodings = track.media.transcodings.filter(
         (t: any) => !t.format.protocol.includes('encrypted')
       );
+      
+      console.log(`Track ${trackId} has ${availableTranscodings.length} available (non-encrypted) transcodings`);
 
       // Sort transcodings to prefer progressive, then hls mp3, then other hls
       const sortedTranscodings = availableTranscodings.sort((a: any, b: any) => {
@@ -414,7 +421,7 @@ app.get('/api/stream/:id', async (req, res) => {
         
         // Only retry on 401/403 (Unauthorized/Forbidden), not 404 (Not Found)
         if (transRes.status === 401 || transRes.status === 403) {
-          console.log(`Transcoding fetch failed with ${transRes.status}, retrying with fresh client ID...`);
+          console.log(`Transcoding fetch failed with ${transRes.status} for ${trackId}, retrying with fresh client ID...`);
           clientId = await getWebClientId();
           transRes = await fetchTranscoding(clientId);
         }
@@ -430,16 +437,16 @@ app.get('/api/stream/:id', async (req, res) => {
             });
           }
         } else {
-          console.warn(`Failed to fetch transcoding URL for protocol ${transcoding.format.protocol}: ${transRes.status}`);
+          console.warn(`Failed to fetch transcoding URL for track ${trackId} (protocol ${transcoding.format.protocol}): ${transRes.status}`);
         }
       }
       
       console.error(`All transcodings failed for track ${trackId}`);
-      return res.status(404).json({ error: 'All transcodings failed' });
+      return res.status(404).json({ error: 'All transcodings failed', trackId });
     }
     
-    console.error(`Stream not found for track ${trackId}`);
-    res.status(404).json({ error: 'Stream not found' });
+    console.error(`Stream not found for track ${trackId} (Track info ok: ${!!track})`);
+    res.status(404).json({ error: 'Stream not found', trackId });
   } catch (err: any) {
     console.error('Stream error:', err);
     res.status(500).json({ error: err.message || 'Stream error' });
@@ -450,6 +457,7 @@ async function startServer() {
   // Initialize SC client ID
   await getWebClientId();
 
+  // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -457,7 +465,12 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    app.use(express.static('dist'));
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    // SPA fallback for production
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
   }
 
   app.listen(PORT, "0.0.0.0", () => {
