@@ -10,6 +10,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { auth, loginWithGoogle, logout } from './firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 
+import { Analytics } from '@vercel/analytics/react';
+
 type Screen = 'home' | 'loading' | 'game' | 'gameover' | 'admin';
 
 const brutalVariants = {
@@ -271,6 +273,7 @@ export default function App() {
           </AnimatePresence>
         </div>
       </main>
+      <Analytics />
     </div>
   );
 }
