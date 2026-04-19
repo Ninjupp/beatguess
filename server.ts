@@ -470,8 +470,10 @@ app.get('/api/stream/:id', async (req, res) => {
 
 async function startServer() {
   try {
+    console.log(`[SERVER] Starting server in ${process.env.NODE_ENV || 'development'} mode. VERCEL detected: ${!!process.env.VERCEL}`);
+    
     // Initialize SC client ID - don't let it crash the whole server
-    await getWebClientId().catch(err => console.error('Initial Client ID fetch failed:', err));
+    await getWebClientId().catch(err => console.error('[SERVER] Initial Client ID fetch failed:', err));
 
     // Vite middleware for development
     if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
