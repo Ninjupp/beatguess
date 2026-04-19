@@ -11,12 +11,10 @@
       "config": { "distDir": "dist" }
     }
   ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/server.ts" },
-    { "src": "/assets/(.*)", "dest": "/assets/$1" },
-    { "src": "/favicon.svg", "dest": "/favicon.svg" },
-    { "src": "/src/(.*)", "status": 404 },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/server.ts" },
+    { "source": "/favicon.svg", "destination": "/favicon.svg" },
+    { "source": "/assets/(.*)", "destination": "/assets/$1" },
+    { "source": "/((?!api|assets|favicon.svg|src).*).*", "destination": "/index.html" }
   ]
 }

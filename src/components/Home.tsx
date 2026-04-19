@@ -241,12 +241,12 @@ export default function Home({ onStartGame }: HomeProps) {
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="mt-16 sm:mt-24 border-t-2 border-white/10 pt-8 pb-12 flex flex-col items-center gap-4">
-        <p className="text-xs font-mono text-white/40 uppercase tracking-widest">
-          v0.2.0 • Built for Speed
-        </p>
-      </div>
+    {/* Footer */}
+    <div className="mt-16 sm:mt-24 border-t-2 border-white/10 pt-8 pb-12 flex flex-col items-center gap-4">
+      <p className="text-xs font-mono text-white/40 uppercase tracking-widest">
+        v0.2.1 • Built for Speed
+      </p>
+    </div>
     </div>
   );
 }

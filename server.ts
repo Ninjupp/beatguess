@@ -328,11 +328,11 @@ async function getWebClientId() {
                       
         if (match) {
           webClientId = match[1];
-          console.log('Successfully fetched new SoundCloud web client ID:', webClientId);
+          console.log(`Successfully fetched new SoundCloud web client ID from ${url}:`, webClientId);
           return webClientId;
         }
       } catch (e) {
-        // Continue to next script
+        console.warn(`Failed to fetch script ${url}:`, e);
       }
     }
   } catch (err) {
@@ -366,15 +366,15 @@ async function calculateStartOffset(track: any) {
 
 app.get('/api/stream/:id', async (req, res) => {
   try {
-    let clientId = webClientId;
+    let clientId = await getWebClientId();
     const trackId = req.params.id;
     
-    console.log(`Streaming request for track ${trackId} with client ID ${clientId}`);
+    console.log(`[STREAM] Request for track ${trackId} with client ID ${clientId}`);
     
     const fetchTrackInfo = async (cid: string) => {
       let trackRes = await fetchWithRetry(`https://api-v2.soundcloud.com/tracks/${trackId}?client_id=${cid}`);
       if (trackRes.status === 401 || trackRes.status === 403) {
-        console.log('Client ID expired or invalid, refreshing...');
+        console.log('[STREAM] Client ID expired or invalid, refreshing...');
         const newCid = await getWebClientId();
         trackRes = await fetchWithRetry(`https://api-v2.soundcloud.com/tracks/${trackId}?client_id=${newCid}`);
         return { res: trackRes, cid: newCid };
@@ -388,22 +388,21 @@ app.get('/api/stream/:id', async (req, res) => {
     let track;
     if (trackRes.ok) {
       track = await trackRes.json();
-      console.log(`Successfully fetched track info for ${trackId}`);
+      console.log(`[STREAM] Successfully fetched track info for ${trackId}`);
     } else {
-      console.warn(`Failed to fetch track info from api-v2 (status ${trackRes.status}) for ${trackId}. Retrying with fresh client ID...`);
-      // Try one more time with a fresh client ID
+      console.warn(`[STREAM] Failed to fetch track info from api-v2 (status ${trackRes.status}) for ${trackId}. Forced reset...`);
       clientId = await getWebClientId();
       const retryRes = await fetchWithRetry(`https://api-v2.soundcloud.com/tracks/${trackId}?client_id=${clientId}`);
       if (retryRes.ok) {
         track = await retryRes.json();
-        console.log(`Successfully fetched track info for ${trackId} after retry`);
+        console.log(`[STREAM] Successfully fetched track info for ${trackId} after forced reset`);
       } else {
-        console.error(`Retry failed for ${trackId} with status ${retryRes.status}`);
+        console.error(`[STREAM] Retry failed for ${trackId} with status ${retryRes.status}`);
       }
     }
     
     if (track && track.media && track.media.transcodings) {
-      console.log(`Track ${trackId} has ${track.media.transcodings.length} transcodings`);
+      console.log(`[STREAM] Track ${trackId} has ${track.media.transcodings.length} transcodings`);
       const startOffset = await calculateStartOffset(track);
       
       // Filter out encrypted HLS as we can't play them without DRM keys
@@ -411,7 +410,7 @@ app.get('/api/stream/:id', async (req, res) => {
         (t: any) => !t.format.protocol.includes('encrypted')
       );
       
-      console.log(`Track ${trackId} has ${availableTranscodings.length} available (non-encrypted) transcodings`);
+      console.log(`[STREAM] Track ${trackId} has ${availableTranscodings.length} available (non-encrypted) transcodings`);
 
       // Sort transcodings to prefer progressive, then hls mp3, then other hls
       const sortedTranscodings = availableTranscodings.sort((a: any, b: any) => {
@@ -437,7 +436,7 @@ app.get('/api/stream/:id', async (req, res) => {
         
         // Only retry on 401/403 (Unauthorized/Forbidden), not 404 (Not Found)
         if (transRes.status === 401 || transRes.status === 403) {
-          console.log(`Transcoding fetch failed with ${transRes.status} for ${trackId}, retrying with fresh client ID...`);
+          console.log(`[STREAM] Transcoding fetch failed with ${transRes.status} for ${trackId}, retrying with fresh client ID...`);
           clientId = await getWebClientId();
           transRes = await fetchTranscoding(clientId);
         }
@@ -445,7 +444,7 @@ app.get('/api/stream/:id', async (req, res) => {
         if (transRes.ok) {
           const transData = await transRes.json();
           if (transData.url) {
-            console.log(`Successfully resolved stream URL for track ${trackId} using protocol ${transcoding.format.protocol}`);
+            console.log(`[STREAM] Successfully resolved stream URL for track ${trackId} using protocol ${transcoding.format.protocol}`);
             return res.json({
               url: transData.url,
               protocol: transcoding.format.protocol,
@@ -453,18 +452,18 @@ app.get('/api/stream/:id', async (req, res) => {
             });
           }
         } else {
-          console.warn(`Failed to fetch transcoding URL for track ${trackId} (protocol ${transcoding.format.protocol}): ${transRes.status}`);
+          console.warn(`[STREAM] Failed to fetch transcoding URL for track ${trackId} (protocol ${transcoding.format.protocol}): ${transRes.status}`);
         }
       }
       
-      console.error(`All transcodings failed for track ${trackId}`);
+      console.error(`[STREAM] All transcodings failed for track ${trackId}`);
       return res.status(404).json({ error: 'All transcodings failed', trackId });
     }
     
-    console.error(`Stream not found for track ${trackId} (Track info ok: ${!!track})`);
+    console.error(`[STREAM] Stream not found for track ${trackId} (Track info ok: ${!!track})`);
     res.status(404).json({ error: 'Stream not found', trackId });
   } catch (err: any) {
-    console.error('Stream error:', err);
+    console.error('[STREAM] error:', err);
     res.status(500).json({ error: err.message || 'Stream error' });
   }
 });

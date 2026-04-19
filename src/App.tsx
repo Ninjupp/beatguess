@@ -171,6 +171,11 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-bg-black font-sans text-text-main selection:bg-primary/30 selection:text-text-main flex flex-col">
+      <div className="bg-primary text-black py-1.5 px-4 text-center text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] border-b border-black relative z-[60]">
+        <span className="opacity-70 mr-2">●</span>
+        BETA <span className="mx-2 opacity-30">|</span> New songs added regularly
+        <span className="opacity-70 ml-2">●</span>
+      </div>
       <header className="bg-bg-black border-b-2 border-white/10 py-3 sm:py-4 px-4 sm:px-6 sticky top-0 z-50">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div 
